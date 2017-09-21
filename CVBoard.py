@@ -24,12 +24,14 @@ import cv2
 
 #Read in card image
 im = cv2.imread('Boom.png')
-ref = cv2.imread('ocr_a_font.jpg')
+ref = cv2.imread('font.png')
+orig = ref
 ref = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
 ref = cv2.threshold(ref, 10, 255, cv2.THRESH_BINARY_INV)[1]
 
-refCnts = cv2.findContours(ref.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-refCnts = refCnts[0] if imutils.is_cv2() else refCnts[1]
+contours_im = cv2.findContours(ref.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+refCnts = contours_im[0] if imutils.is_cv2() else contours_im[1]
+counts = contours_im[0] if imutils.is_cv2() else contours_im[1]
 refCnts = contours.sort_contours(refCnts, method='left-to-right')[0]
 digits = {}
 
@@ -76,4 +78,13 @@ for(i, c) in enumerate(cnts):
 locs = sorted(locs, key=lambda x:x[0])
 output = []
 
-imshow(thresh)
+
+print(refCnts[0], refCnts[0].shape, refCnts[0][2])
+print(len(contours_im))
+cv2.drawContours(orig, counts ,-1,(128,255,0),-1)
+#imshow(orig)
+print(len(locs))
+#imshow(digits[0])
+imshow(locs[0])
+
+#imshow(ref)
