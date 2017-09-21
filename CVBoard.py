@@ -23,7 +23,7 @@ import cv2
 #CV to read in card and get data
 
 #Read in card image
-im = cv2.imread('Boom.png')
+im = cv2.imread('al.png')
 ref = cv2.imread('font.png')
 orig = ref
 ref = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
@@ -70,21 +70,24 @@ locs = []
 for(i, c) in enumerate(cnts):
     (x,y,w,h) = cv2.boundingRect(c)
     ar = w / float(h)
-    if ar > 2.5 and ar < 4.0:
-        if(w > 40 and w < 55) and (h > 10 and h < 20):
-            locs.append((x,y,w,h))
+    #if ar > 2.5 and ar < 4.0:
+    if(w > 0 and w < 100) and (h > 0 and h < 100):
+        locs.append((x,y,w,h))
+        
             
-            
-locs = sorted(locs, key=lambda x:x[0])
+#locs = sorted(locs, key=lambda x:x[0])
 output = []
+#for(i (gX,gY,gW,gH)) in enumerate(locs):
+    
 
-
-print(refCnts[0], refCnts[0].shape, refCnts[0][2])
-print(len(contours_im))
-cv2.drawContours(orig, counts ,-1,(128,255,0),-1)
+#print(refCnts[0], refCnts[0].shape, refCnts[0][2])
+#print(len(contours_im))
+#print(np.array(counts).shape)
+locs = np.array(locs).reshape((-1,1,2)).astype(np.int32)
+#print(cnts[28])
+print(locs)
+cv2.drawContours(im,locs,-1,(255,0,0),2) #28 is name
 #imshow(orig)
-print(len(locs))
-#imshow(digits[0])
-imshow(locs[0])
-
+#imshow(orig)
+cv2.imshow("asdf", im)
 #imshow(ref)
