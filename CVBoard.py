@@ -37,6 +37,7 @@ digits = {}
 
 for(i,c) in enumerate(refCnts):
     (x,y,w,h) = cv2.boundingRect(c)
+    cv2.rectangle(orig, (x,y), (x+w, y+h), (255,20,0),2)
     roi = ref[y:y+h, x:x+w]
     roi = cv2.resize(roi, (57,88))
     
@@ -70,7 +71,7 @@ for(i, c) in enumerate(cnts):
     (x,y,w,h) = cv2.boundingRect(c)
     ar = w / float(h)
     if ar > 0 and ar < 20.0:
-        if(w > 60 and w < 1000) and (h > 30 and h < 35):
+        if(w > 50 and w < 1000) and (h > 20 and h < 35):#if(w > 60 and w < 1000) and (h > 30 and h < 35):
             cv2.rectangle(im, (x,y), (x+w, y+h), (255,0,0),2)
             locs.append((x,y,w,h))
         
@@ -80,6 +81,7 @@ output = []
 for(i, (gX,gY,gW,gH)) in enumerate(locs):
     groupOutput = []
     group = gray[gY - 5:gY + gH + 5, gX - 5:gX + gW + 5]
+    o = cv2.cvtColor(group, cv2.COLOR_GRAY2RGB)
     group = cv2.threshold(group, 0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
     digitCnts = cv2.findContours(group.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     #cv2.rectangle(im, (group[0][0],group[0][1]), (group[0][0]+group[0][2], group[0][1]+group[0][3]), (0,0,255),20)
@@ -87,14 +89,16 @@ for(i, (gX,gY,gW,gH)) in enumerate(locs):
     digitCnts = contours.sort_contours(digitCnts, method = "left-to-right")[0]
     for c in digitCnts:
         (x,y,w,h) = cv2.boundingRect(c)
-        roi = group[y:y + h, x:x + w]
-        roi = cv2.resize(roi, (57,88))
-        scores = []
-        for(digit, digitROI) in digits.items():
-            result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF)
-            (_, score, _ , _) = cv2.minMaxLoc(result)
-            scores.append(score)
-        groupOutput.append(str(np.argmax(scores)))
+        if(w > 10 and w < 50) and (h > 12 and h < 20):
+            cv2.rectangle(o, (x,y),(x+w,y+h),(0,255,0),2)
+            roi = group[y:y + h, x:x + w]
+            roi = cv2.resize(roi, (57,88))#(57,88))
+            scores = []
+            for(digit, digitROI) in digits.items():
+                result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF)
+                (_, score, _ , _) = cv2.minMaxLoc(result)
+                scores.append(score)
+            groupOutput.append(str(np.argmax(scores)))
             
     
 
@@ -103,8 +107,9 @@ for(i, (gX,gY,gW,gH)) in enumerate(locs):
 #print(np.array(counts).shape)
 #locs = np.array(locs).reshape((-1,1,2)).astype(np.int32)
 #print(cnts[28])
+print(len(group))
 print(groupOutput)
-cv2.imshow("asdf", group)
+cv2.imshow("asdf", o)
 #cv2.drawContours(im,locs,-1,(255,0,0),20) #32 is name
 #imshow(orig)
 #imshow(orig)
