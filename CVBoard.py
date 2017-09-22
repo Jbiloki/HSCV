@@ -23,8 +23,8 @@ import cv2
 #CV to read in card and get data
 
 #Read in card image
-im = cv2.imread('boom.png')
-ref = cv2.imread('fonttry.png')
+im = cv2.imread('al.png')
+ref = cv2.imread('HS_font.png')
 orig = ref
 ref = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
 ref = cv2.threshold(ref, 10, 255, cv2.THRESH_BINARY_INV)[1]
@@ -59,7 +59,7 @@ gradX = (255 * ((gradX-minVal)/ (maxVal-minVal)))
 gradX = gradX.astype('uint8')
 
 gradX = cv2.morphologyEx(gradX, cv2.MORPH_CLOSE, rectKernel)
-thresh = cv2.threshold(gradX, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+thresh = cv2.threshold(gradX, 10, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
 thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, sqKernel)
 
@@ -71,35 +71,44 @@ for(i, c) in enumerate(cnts):
     (x,y,w,h) = cv2.boundingRect(c)
     ar = w / float(h)
     if ar > 0 and ar < 20.0:
-        if(w > 50 and w < 1000) and (h > 20 and h < 35):#if(w > 60 and w < 1000) and (h > 30 and h < 35):
+        if(w > 60 and w < 1000) and (h > 20 and h < 35):#if(w > 60 and w < 1000) and (h > 30 and h < 35):
             cv2.rectangle(im, (x,y), (x+w, y+h), (0,0,255),2)
             locs.append((x,y,w,h))
         
             
 locs = sorted(locs, key=lambda x:x[0])
 output = []
+crops = {}
+idx = 0
 for(i, (gX,gY,gW,gH)) in enumerate(locs):
     groupOutput = []
-    group = gray[gY+3:gY + gH + 3, gX-3:gX + gW + 10]
+    group = gray[gY - 2:gY + gH + 2, gX - 3:gX + gW + 5]
     o = cv2.cvtColor(group, cv2.COLOR_GRAY2RGB)
+    
     #cv2.rectangle(o, (x,y),(x+w,y+h),(0,255,0),2)
-    group = cv2.threshold(group, 0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    group = cv2.threshold(group,10,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
     digitCnts = cv2.findContours(group.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     digitCnts = digitCnts[0] if imutils.is_cv2() else digitCnts[1]
     digitCnts = contours.sort_contours(digitCnts, method = "left-to-right")[0]
     for c in digitCnts:
         (x,y,w,h) = cv2.boundingRect(c)
-        cv2.rectangle(o, (x,y),(x+w,y+h),(0,0,255),2)
-        #if(w > 5 and w < 50) and (h > 5 and h < 20):
-        
-        roi = group[y:y + h, x:x + w]
-        roi = cv2.resize(roi, (57,88))#(57,88))
-        scores = []
-        for(digit, digitROI) in digits.items():
-            result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF)
-            (_, score, _ , _) = cv2.minMaxLoc(result)
-            scores.append(score)
-        groupOutput.append(str(np.argmax(scores)))
+        ar = w / float(h)
+        if ar > .4 and ar < 3.0:
+            if(w > 6 and w < 20) and (h > 6 and h < 20):
+                
+                #cv2.rectangle(o, (x,y),(x+w,y+h),(0,0,255),1)
+                roi = group[y:y + h, x:x + w]
+                
+                cv2.rectangle(o, (x,y),(x+w,y+h),(0,0,255),1)
+                roi = cv2.resize(roi, (57,88))#(57,88))
+                crops[idx] = roi
+                idx += 1
+                scores = []
+                for(digit, digitROI) in digits.items():
+                    result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF)
+                    (_, score, _ , _) = cv2.minMaxLoc(result)
+                    scores.append(result)
+                groupOutput.append(str(np.argmax(scores)))
             
     
 
@@ -110,13 +119,20 @@ for(i, (gX,gY,gW,gH)) in enumerate(locs):
 #print(cnts[28])
 print(len(group))
 print(groupOutput)
-cv2.imshow("asdf", digits[38])
 
-#cardName = ""
-#for i in range(0,len(groupOutput)):
-#    cardName += str(chr(int(groupOutput[i])+97))
+#cv2.imshow("daf", o)
+cv2.imshow("asdf", crops[1])
+cv2.imshow("actual", digits[21])
+
+cardName = ""
+for i in range(0,len(groupOutput)):
+    if(int(groupOutput[i]) <= 26):
+        cardName += str(chr(int(groupOutput[i])+65))
+    else:
+        print("er")
+        cardName += str(chr(int(groupOutput[i])+97 - 26))
     
-#print(cardName)
+print(cardName)
 
 #cv2.drawContours(im,locs,-1,(255,0,0),20) #32 is name
 #imshow(orig)
