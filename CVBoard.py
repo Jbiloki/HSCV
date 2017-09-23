@@ -12,6 +12,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Images
+from skimage import exposure
+from skimage.filters import rank
+from skimage.filters.rank import autolevel
+from skimage.filters.rank import median
+from skimage.filters.rank import mean_bilateral
+from skimage.morphology import disk
 from skimage.io import imread, imshow
 from skimage.transform import resize
 from skimage.color import rgb2gray
@@ -21,15 +27,12 @@ import imutils
 import math
 import cv2
 
-import pytesseract
 from PIL import Image
-path_tess = tesseract_cmd = 'C:\\Program Files (x86)\\Tesseract-OCR\\tesseract'
-pytesseract.pytesseract.tesseract_cmd = path_tess
 #CV to read in card and get data
 
 #Read in card image
 im = cv2.imread('ui.png')
-ref = cv2.imread('lighter copy.png')
+ref = cv2.imread('lower.png')
 orig = ref
 ref = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
 cv2.bitwise_not(ref)
@@ -46,6 +49,7 @@ for(i,c) in enumerate(refCnts):
     cv2.rectangle(orig, (x,y),(x+w,y+h),(0,0,255),2)
     roi = ref[y:y+h+ 1, x:x+w+ 1]
     roi = cv2.resize(roi, (57,88))
+    roi = rank.equalize(roi, disk(5))
     digits[i] = roi
           
 rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
@@ -90,13 +94,12 @@ kernel = np.ones((3,3), np.uint8)
 idx = 0
 for(i, (gX,gY,gW,gH)) in enumerate(locs):
     groupOutput = []
-    
-    group = gray[gY:gY + gH, gX:gX + gW]
+    group = gray[gY - 1:gY + gH, gX:gX + gW]
     o = cv2.cvtColor(group, cv2.COLOR_GRAY2RGB)
     group = cv2.threshold(group,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    digitCnts = cv2.findContours(group.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    digitCnts = digitCnts[0] if imutils.is_cv2() else digitCnts[1]
-    digitCnts = contours.sort_contours(digitCnts, method = "left-to-right")[0]
+    #digitCnts = cv2.findContours(group.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    #digitCnts = digitCnts[0] if imutils.is_cv2() else digitCnts[1]
+    #digitCnts = contours.sort_contours(digitCnts, method = "left-to-right")[0]
     cv2.drawContours(o, digitCnts, -1, (0,255,0), 1)
     
     for c in digitCnts:
@@ -106,19 +109,19 @@ for(i, (gX,gY,gW,gH)) in enumerate(locs):
         if(w > 3 and w < 20) and (h > 5 and h < 20):
             
             cv2.rectangle(o, (x,y),(x+w,y+h),(0,0,255),1)
-            roi = group[y :y+ h + 1, x :x + w ]
+            roi = group[y :y+ h + 2, x:x + w]
             non_rotated[idx] = cv2.resize(roi, (57,88))
             coords = np.column_stack(np.where(roi > 0))
             angle = cv2.minAreaRect(coords)[-1]
             if(angle < -45):
-                angle = -(95 + angle)
+                angle = -(90 + angle)
             else:
                 angle = -angle
             (h , w) = roi.shape[:2]
             center = (w//2, h//2)
             M = cv2.getRotationMatrix2D(center, angle, 1.0)
             rotated = cv2.warpAffine(roi, M, (w, h), flags = cv2.INTER_CUBIC, borderMode = cv2.BORDER_REPLICATE)
-   
+            rotated = rank.equalize(rotated, disk(3))
             cv2.rectangle(o, (x,y),(x+w,y+h),(0,0,255),1)
             roi = cv2.resize(rotated, (57,88))#(57,88))
             crops[idx] = roi
@@ -139,11 +142,11 @@ for(i, (gX,gY,gW,gH)) in enumerate(locs):
 #print(cnts[28])
 print(allout[0])
 print(groupOutput)
-
+outDict = {20: 'u', 5: 'f', 19: 't', 8: 'i', 12:'m',0:'a',4:'e', 11:'l'}
 #cv2.imshow("daf", o)
 cv2.imshow("asdf", o)
-cv2.imshow("CHAR", crops[1])
-cv2.imshow("actual", digits[20])
+cv2.imshow("CHAR", crops[9])
+cv2.imshow("actual", digits[0])
 cv2.imshow("template", orig)
 #cv2.imshow("stuff", non_rotated[1])
 
