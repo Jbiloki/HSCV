@@ -14,12 +14,15 @@ import pyautogui
 import imutils
 import sched
 
+#Block out unused areas of the screen to avoid noise
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
     cv2.fillPoly(mask, vertices, 255)
     masked = cv2.bitwise_and(img, mask)
     return masked
 
+#Look for lines in the image
+#TODO: May not be necessary remove to improve speed
 def draw_lines(img, lines):
     try:
         for line in lines:
@@ -28,6 +31,7 @@ def draw_lines(img, lines):
     except:
         pass
 
+#Process image
 def process_img(im):
     processed = cv2.Canny(im, threshold1 = 200, threshold2 = 300)
     processed = cv2.GaussianBlur(processed, (5,5),0)
@@ -35,7 +39,7 @@ def process_img(im):
     draw_lines(processed, lines)
     return processed
     
-
+#Take region of roi containing a card name and pass it to CVBoard.py to describe card
 def findCards(orig,gray):
     rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
     sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
@@ -61,26 +65,17 @@ def findCards(orig,gray):
         locs = []
         
         for(i, c) in enumerate(cnts):
-            (x,y,w,h) = cv2.boundingRect(c)
-            #ar = w / float(h)
-            #if ar > 2 and ar < 10.0:
+            (x,y,w,h) = cv2.boundingRect(c) #Consider aspect ratio as a means of better identfying cards
             if(w > 50 and w < 500) and (h > 15 and h < 35):
                 cv2.rectangle(p,(x,y), (x+w, y+h),(255,0,0),2)
                 locs.append((x - 5,y,w + 10,h + 5))
             if locs:
-                CVBoard.addFromBoard(orig,locs,gray)
+                CVBoard.addFromBoard(orig,locs,gray) #Send roi region (should be the name) to be described
                 locs = []
-        #for(i, (gX,gY,gW,gH)) in enumerate(locs):
-        #    group = gray[gY - 5:gY + gH, gX:gX + gW]
-        #    cv2.imshow("group", group)
 
 while(True):
     printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
     printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
-    #printscreen_to_numpy = np.array(printscreen.getdata(), dtype='uint8')
-    
-    #findCards(printscreen)
-    #processed = process_img(printscreen_gray)
     vertices = np.array([[100,1000],[100,160],[1200,160],[1200,500],[1100,500],[1100,400]])
     roi_board = region_of_interest(printscreen,[vertices])
     roi_board = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2RGB)
@@ -91,24 +86,3 @@ while(True):
     if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
         break
-    
-    
-    
-    
-    
-'''OLDPROCESSING    
-def process_img(orig_img):
-    #processed = cv2.Canny(orig_img,threshold1 = 400, threshold2 = 500)
-    #blurred = cv2.GaussianBlur(processed, (9,9), 10)
-    #thresh = cv2.threshold(blurred, 60, 355, cv2.THRESH_BINARY)[1]
-    #cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    #cnts = cnts[0] if imutils.is_cv2() else cnts[1]
-    #for(i,c) in enumerate(cnts):
-    #    (x,y,w,h) = cv2.boundingRect(c)
-    #    if(w > 60 and w < 500) and (h > 20 and h < 30):#if(w > 25 and w < 800) and (h > 25 and h < 800):
-    #        cv2.rectangle(printscreen, (x,y), (x+w, y+h), (255,0,0), 2)
-    findCards(orig_img)
-    #cv2.imshow("passed", printscreen[y:y+h, x:x+w])
-    #CVBoard.addFromBoard(orig_img)
-    return processed
-'''
