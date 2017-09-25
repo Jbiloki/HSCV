@@ -42,7 +42,7 @@ for(i,c) in enumerate(refCnts):
 #CV to read in card and get data
 def addFromBoard(im,locs, gray):
     #Read in card image
-    
+    cardName = ""
     locs = sorted(locs, key=lambda x:x[0])
     crops = {}
     non_rotated = {}
@@ -105,9 +105,12 @@ def addFromBoard(im,locs, gray):
     #cv2.imshow("true", im)
     #cv2.imshow("template", orig)
     cardName = ""
+    print(len(groupOutput))
+    
     for i in range(len(groupOutput)):
         cardName += outDict[int(groupOutput[i])]
-    print(cardName)
+    print("Card: ", cardName)
+    groupOutput = []
     print(difflib.get_close_matches(cardName,db['name']))
     #cv2.drawContours(im,locs,-1,(255,0,0),20) #32 is name
     #imshow(orig)

@@ -12,6 +12,7 @@ import cv2
 import time
 import pyautogui
 import imutils
+import sched
 
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
@@ -65,9 +66,10 @@ def findCards(orig,gray):
             #if ar > 2 and ar < 10.0:
             if(w > 50 and w < 500) and (h > 15 and h < 35):
                 cv2.rectangle(p,(x,y), (x+w, y+h),(255,0,0),2)
-                locs.append((x,y,w,h))
+                locs.append((x - 5,y,w + 10,h + 5))
             if locs:
                 CVBoard.addFromBoard(orig,locs,gray)
+                locs = []
         #for(i, (gX,gY,gW,gH)) in enumerate(locs):
         #    group = gray[gY - 5:gY + gH, gX:gX + gW]
         #    cv2.imshow("group", group)
@@ -75,7 +77,6 @@ def findCards(orig,gray):
 while(True):
     printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
     printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
-    
     #printscreen_to_numpy = np.array(printscreen.getdata(), dtype='uint8')
     
     #findCards(printscreen)
