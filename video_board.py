@@ -13,6 +13,28 @@ import time
 import pyautogui
 import imutils
 
+def region_of_interest(img, vertices):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, vertices, 255)
+    masked = cv2.bitwise_and(img, mask)
+    return masked
+
+def draw_lines(img, lines):
+    try:
+        for line in lines:
+            coords = line[0]
+            cv2.line(img, (coords[0], coords[1]), (coords[2],coords[3]), [0,255,0],1)
+    except:
+        pass
+
+def process_img(im):
+    processed = cv2.Canny(im, threshold1 = 200, threshold2 = 300)
+    processed = cv2.GaussianBlur(processed, (5,5),0)
+    lines = cv2.HoughLinesP(processed, 1, np.pi/180, 180, 50,5)
+    draw_lines(processed, lines)
+    return processed
+    
+
 def findCards(orig,gray):
     rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
     sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
@@ -39,25 +61,32 @@ def findCards(orig,gray):
         
         for(i, c) in enumerate(cnts):
             (x,y,w,h) = cv2.boundingRect(c)
-            ar = w / float(h)
-            if ar > 0 and ar < 20.0:
-                if(w > 60 and w < 1000) and (h > 20 and h < 35):#if(w > 60 and w < 1000) and (h > 30 and h < 35):
-                    locs.append((x,y,w,h))
-            #CVBoard.addFromBoard(orig,locs,gray)
-        for(i, (gX,gY,gW,gH)) in enumerate(locs):
-            group = gray[gY - 5:gY + gH, gX:gX + gW]
-            cv2.imshow("group", group)
+            #ar = w / float(h)
+            #if ar > 2 and ar < 10.0:
+            if(w > 50 and w < 500) and (h > 15 and h < 35):
+                cv2.rectangle(p,(x,y), (x+w, y+h),(255,0,0),2)
+                locs.append((x,y,w,h))
+            if locs:
+                CVBoard.addFromBoard(orig,locs,gray)
+        #for(i, (gX,gY,gW,gH)) in enumerate(locs):
+        #    group = gray[gY - 5:gY + gH, gX:gX + gW]
+        #    cv2.imshow("group", group)
 
 while(True):
-    printscreen = ImageGrab.grab(bbox=(0,40, 1024, 768))
+    printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
     printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
-    printscreen_gray = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2GRAY)
+    
     #printscreen_to_numpy = np.array(printscreen.getdata(), dtype='uint8')
     
     #findCards(printscreen)
     #processed = process_img(printscreen_gray)
-    findCards(printscreen, printscreen_gray)
-    cv2.imshow('window', printscreen)
+    vertices = np.array([[100,1000],[100,160],[1200,160],[1200,500],[1100,500],[1100,400]])
+    roi_board = region_of_interest(printscreen,[vertices])
+    roi_board = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2RGB)
+    roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
+    p = process_img(roi_board_gray)
+    findCards(roi_board, roi_board_gray)
+    cv2.imshow('window', p)
     if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
         break
