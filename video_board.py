@@ -82,7 +82,7 @@ while(True):
     roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
     p = process_img(roi_board_gray)
     findCards(roi_board, roi_board_gray)
-    cv2.imshow('window', p)
+    cv2.imshow('window', roi_board)
     if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
         break
