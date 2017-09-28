@@ -5,34 +5,25 @@ Created on Wed Sep 20 11:27:37 2017
 @author: Nguyen
 """
 
-import numpy as np
-from PIL import ImageGrab
+#My imports
 import CVBoard
+import playerClass
+
+#Linear Algebra
+import numpy as np
+
+#Image manipulation
+from PIL import ImageGrab
 import cv2
 import time
+
+
+#Internal movement and scheduling for timers
 import pyautogui
 import imutils
 import sched
 import _thread
 
-
-class playerHand:
-    def __init__(self, currHand):
-        self.currHand = currHand
-    def displayHand(self):
-        print(self.currHand)
-    def addToHand(self, card):
-        if card is not None:
-            self.currHand.append(card)
-    def removeFromHand(self, card):
-        if card in currHand:
-            currHand.remove(card)
-#Block out unused areas of the screen to avoid noise
-def region_of_interest(img, vertices):
-    mask = np.zeros_like(img)
-    cv2.fillPoly(mask, vertices, 255)
-    masked = cv2.bitwise_and(img, mask)
-    return masked
 
 #Look for lines in the image
 #TODO: May not be necessary remove to improve speed
