@@ -13,7 +13,20 @@ import time
 import pyautogui
 import imutils
 import sched
+import _thread
 
+
+class playerHand:
+    def __init__(self, currHand):
+        self.currHand = currHand
+    def displayHand(self):
+        print(self.currHand)
+    def addToHand(self, card):
+        if card is not None:
+            self.currHand.append(card)
+    def removeFromHand(self, card):
+        if card in currHand:
+            currHand.remove(card)
 #Block out unused areas of the screen to avoid noise
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
@@ -34,13 +47,13 @@ def draw_lines(img, lines):
 #Process image
 def process_img(im):
     processed = cv2.Canny(im, threshold1 = 200, threshold2 = 300)
-    processed = cv2.GaussianBlur(processed, (5,5),0)
+    processed = cv2.GaussianBlur(processed, (3,3),10)
     lines = cv2.HoughLinesP(processed, 1, np.pi/180, 180, 50,5)
     draw_lines(processed, lines)
     return processed
     
 #Take region of roi containing a card name and pass it to CVBoard.py to describe card
-def findCards(orig,gray):
+def findCards(orig,gray, player):
     rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9,3))
     sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
     orig = imutils.resize(orig, width = 300)
@@ -66,23 +79,28 @@ def findCards(orig,gray):
         
         for(i, c) in enumerate(cnts):
             (x,y,w,h) = cv2.boundingRect(c) #Consider aspect ratio as a means of better identfying cards
-            if(w > 50 and w < 500) and (h > 15 and h < 35):
+            if(w > 50 and w < 250) and (h > 15 and h < 35):
                 cv2.rectangle(p,(x,y), (x+w, y+h),(255,0,0),2)
                 locs.append((x - 5,y,w + 10,h + 5))
             if locs:
-                CVBoard.addFromBoard(orig,locs,gray) #Send roi region (should be the name) to be described
+                player.addToHand(CVBoard.addFromBoard(orig,locs,gray)) #Send roi region (should be the name) to be described
+                time.sleep(1)
                 locs = []
 
+currHand = []
+player = playerHand(currHand)
 while(True):
     printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
     printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
-    vertices = np.array([[100,1000],[100,160],[1200,160],[1200,500],[1100,500],[1100,400]])
+    vertices = np.array([[100,600],[100,160],[1024,160],[1024,500],[750,500],[750,600]])#,[1100,500],[1100,400]
     roi_board = region_of_interest(printscreen,[vertices])
     roi_board = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2RGB)
     roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
     p = process_img(roi_board_gray)
-    findCards(roi_board, roi_board_gray)
+    findCards(roi_board, roi_board_gray, player)
+    player.displayHand()
     cv2.imshow('window', roi_board)
+    cv2.imshow('window2', p)
     if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
         break

@@ -112,10 +112,12 @@ def addFromBoard(im,locs, gray):
     print("Card: ", cardName)
     groupOutput = []
     #Get closest match from our card database
-    currCard = difflib.get_close_matches(cardName,db['name'])
-    print(currCard)
-    if currCard != []:
-        print("The Name is: ",str(db[db['name'] == currCard[0]].name.item()))
-        print("The Attack is: ",int(db[db['name'] == currCard[0]].attack.item()))
-        print("The Health is: ",int(db[db['name'] == currCard[0]].health.item()))
-        print("The Text is: ",str(db[db['name'] == currCard[0]].text.item()))
+    if cardName != "":
+        currCard = difflib.get_close_matches(cardName,db['name'])
+        print(currCard)
+        if currCard != []:
+            return currCard[0]
+            print("The Name is: ",str(db[db['name'] == currCard[0]].name.item()))
+            print("The Attack is: ",str(db[db['name'] == currCard[0]].attack.item()))
+            print("The Health is: ",str(db[db['name'] == currCard[0]].health.item()))
+            print("The Text is: ",str(db[db['name'] == currCard[0]].text.item()))
