@@ -21,9 +21,14 @@ import time
 #Internal movement and scheduling for timers
 import pyautogui
 import imutils
-import sched
-import _thread
 
+
+#Block out unused areas of the screen to avoid noise
+def region_of_interest(img, vertices):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, vertices, 255)
+    masked = cv2.bitwise_and(img, mask)
+    return masked
 
 #Look for lines in the image
 #TODO: May not be necessary remove to improve speed
@@ -37,11 +42,12 @@ def draw_lines(img, lines):
 
 #Process image
 def process_img(im):
-    processed = cv2.Canny(im, threshold1 = 200, threshold2 = 300)
-    processed = cv2.GaussianBlur(processed, (3,3),10)
-    lines = cv2.HoughLinesP(processed, 1, np.pi/180, 180, 50,5)
-    draw_lines(processed, lines)
-    return processed
+    #processed = cv2.Canny(im, threshold1 = 200, threshold2 = 300)
+    #processed = cv2.GaussianBlur(processed, (3,3),0)
+    #cv2.bitwise_not(im,processed)
+    lines = cv2.HoughLinesP(im, 1, np.pi/180, 80, 100,10)
+    draw_lines(im, lines)
+    return im
     
 #Take region of roi containing a card name and pass it to CVBoard.py to describe card
 def findCards(orig,gray, player):
@@ -70,7 +76,7 @@ def findCards(orig,gray, player):
         
         for(i, c) in enumerate(cnts):
             (x,y,w,h) = cv2.boundingRect(c) #Consider aspect ratio as a means of better identfying cards
-            if(w > 50 and w < 250) and (h > 15 and h < 35):
+            if(w > 40 and w < 250) and (h > 18 and h < 35):
                 cv2.rectangle(p,(x,y), (x+w, y+h),(255,0,0),2)
                 locs.append((x - 5,y,w + 10,h + 5))
             if locs:
@@ -78,12 +84,14 @@ def findCards(orig,gray, player):
                 time.sleep(1)
                 locs = []
 
-currHand = []
-player = playerHand(currHand)
+player = playerClass.playerHand()
 while(True):
     printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
     printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
     vertices = np.array([[100,600],[100,160],[1024,160],[1024,500],[750,500],[750,600]])#,[1100,500],[1100,400]
+    startLeft = np.array([[200,400],[200,180],[340,180],[340,400]])
+    startMid = np.array([[440,400],[440,180],[590,180],[590,400]])
+    startRight = np.array([[670,400],[670,180],[850,180],[850,400]])
     roi_board = region_of_interest(printscreen,[vertices])
     roi_board = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2RGB)
     roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
