@@ -24,7 +24,14 @@ import imutils
 import sched
 import _thread
 
+import msvcrt
 
+#Block out unused areas of the screen to avoid noise
+def region_of_interest(img, vertices):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, vertices, 255)
+    masked = cv2.bitwise_and(img, mask)
+    return masked
 #Look for lines in the image
 #TODO: May not be necessary remove to improve speed
 def draw_lines(img, lines):
@@ -38,9 +45,9 @@ def draw_lines(img, lines):
 #Process image
 def process_img(im):
     processed = cv2.Canny(im, threshold1 = 200, threshold2 = 300)
-    processed = cv2.GaussianBlur(processed, (3,3),10)
-    lines = cv2.HoughLinesP(processed, 1, np.pi/180, 180, 50,5)
-    draw_lines(processed, lines)
+    #processed = cv2.GaussianBlur(im, (5,5),0)
+    #lines = cv2.HoughLinesP(processed, 1, np.pi/180, 180, 50,5)
+    #draw_lines(processed, lines)
     return processed
     
 #Take region of roi containing a card name and pass it to CVBoard.py to describe card
@@ -51,7 +58,8 @@ def findCards(orig,gray, player):
     if orig.any():
         cv2.bitwise_not(gray)
         tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, rectKernel)
-        gradX = cv2.Sobel(tophat, ddepth=cv2.CV_32F, dx = 1, dy = 0, ksize = -1)
+        blur = cv2.GaussianBlur(tophat, (5,5),5)
+        gradX = cv2.Sobel(blur, ddepth=cv2.CV_32F, dx = 1, dy = 0, ksize = -1)
         gradX = np.absolute(gradX)
         
         #Minmax normalize
@@ -70,28 +78,38 @@ def findCards(orig,gray, player):
         
         for(i, c) in enumerate(cnts):
             (x,y,w,h) = cv2.boundingRect(c) #Consider aspect ratio as a means of better identfying cards
-            if(w > 50 and w < 250) and (h > 15 and h < 35):
-                cv2.rectangle(p,(x,y), (x+w, y+h),(255,0,0),2)
+            if(w > 40 and w < 250) and (h > 18 and h < 35):
+                cv2.rectangle(orig,(x,y), (x+w, y+h),(255,0,0),2)
                 locs.append((x - 5,y,w + 10,h + 5))
             if locs:
                 player.addToHand(CVBoard.addFromBoard(orig,locs,gray)) #Send roi region (should be the name) to be described
-                time.sleep(1)
+                #time.sleep(1)
                 locs = []
 
-currHand = []
-player = playerHand(currHand)
-while(True):
-    printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
-    printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
-    vertices = np.array([[100,600],[100,160],[1024,160],[1024,500],[750,500],[750,600]])#,[1100,500],[1100,400]
-    roi_board = region_of_interest(printscreen,[vertices])
-    roi_board = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2RGB)
-    roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
-    p = process_img(roi_board_gray)
-    findCards(roi_board, roi_board_gray, player)
-    player.displayHand()
-    cv2.imshow('window', roi_board)
-    cv2.imshow('window2', p)
-    if cv2.waitKey(25) & 0xFF == ord('q'):
-        cv2.destroyAllWindows()
-        break
+
+def main(): 
+    while(True):
+        printscreen = ImageGrab.grab(bbox=(0,100, 1024, 768))
+        printscreen = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
+        vertices = np.array([[100,600],[100,160],[400,160],[400,10],[580,10],[580,160],[1024,160],[1024,450],[750,450],[750,600]])#,[1100,500],[1100,400]
+        roi_board = region_of_interest(printscreen,[vertices])
+        roi_board = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2RGB)
+        roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
+        #p = process_img(roi_board_gray)
+        findCards(roi_board, roi_board_gray, player)
+        player.displayHand()
+        cv2.imshow('window', roi_board)
+        
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            break
+        
+def keydown():
+    while(True):
+        if msvcrt.kbhit:
+            player.displayHand()
+if __name__ == "__main__":
+    player = playerClass.playerHand()
+    _thread.start_new_thread(main())
+    _thread.start_new_thread(keydown())
+    
