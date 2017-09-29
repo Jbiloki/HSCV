@@ -16,5 +16,10 @@ class playerHand:
         if card is not None:
             self.currHand.append(card)
     def removeFromHand(self, card):
+<<<<<<< HEAD
         if card in self.currHand:
             self.currHand.remove(card)
+=======
+        if card in currHand:
+            currHand.remove(card)
+>>>>>>> c0d32fac2135702d8308c99569ec4dae4a167085
