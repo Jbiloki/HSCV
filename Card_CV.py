@@ -57,11 +57,10 @@ def addFromBoard(im,locs, gray):
         
         #Cut out the group of the name
         group = gray[gY - 5:gY + gH, gX:gX + gW]
-        
         #cv2.imshow("group", group) Used for debugging, see what name or roi is passed here
 
         #Process group
-        group = cv2.threshold(group,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        group = cv2.threshold(group,10,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
         digitCnts = cv2.findContours(group.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         digitCnts = digitCnts[0] if imutils.is_cv2() else digitCnts[1]
         digitCnts = contours.sort_contours(digitCnts, method = "left-to-right")[0]
@@ -109,10 +108,11 @@ def addFromBoard(im,locs, gray):
     cardName = ""
     for i in range(len(groupOutput)):
         cardName += outDict[int(groupOutput[i])]
-    #print("Card: ", cardName)
+    print("Card: ", cardName)
     groupOutput = []
     #Get closest match from our card database
     if cardName != "":
         currCard = difflib.get_close_matches(cardName,db['name'])
         if currCard != []:
+            print("Card added to your hand")
             return {'name': str(db[db['name'] == currCard[0]].name.item()), 'attack':str(db[db['name'] == currCard[0]].attack.item()),'health':str(db[db['name'] == currCard[0]].health.item()),'text':str(db[db['name'] == currCard[0]].text.item())}
