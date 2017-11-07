@@ -25,6 +25,8 @@ import pyautogui
 import imutils
 
 
+#TODO: Going to need a new approach, create a classifier to find cards instead of raw size values. This will be more obtuse and hopefully allow for more clean tracking.
+
 #Block out unused areas of the screen to avoid noise
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
