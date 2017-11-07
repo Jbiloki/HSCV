@@ -108,7 +108,7 @@ def addFromBoard(im,locs, gray):
     cardName = ""
     for i in range(len(groupOutput)):
         cardName += outDict[int(groupOutput[i])]
-    print("Card: ", cardName)
+    #print("Card: ", cardName)
     groupOutput = []
     #Get closest match from our card database
     if cardName != "":

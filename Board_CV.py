@@ -8,6 +8,7 @@ Created on Wed Sep 20 11:27:37 2017
 #My imports
 import Card_CV
 import gameState
+import Tracked_Cards
 
 #Linear Algebra
 import numpy as np
@@ -27,8 +28,8 @@ import imutils
 #Block out unused areas of the screen to avoid noise
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
-    cv2.fillPoly(mask, vertices, 255)
-    masked = cv2.bitwise_and(img, mask)
+    cv2.fillPoly(mask, vertices,400)
+    masked = cv2.bitwise_and(img, img, mask = mask)
     return masked
 
 #Look for lines in the image
@@ -95,32 +96,35 @@ def findCards(orig, gray, tracked, tracker):
     for i,c in enumerate(cnts):
         (x,y,w,h) = cv2.boundingRect(c)
         
-        #if len(approx) <= 10:#$ and len(approx) < 8:
-        if(w > 200 and w < 300) and (h > 200 and h < 400):
-            tracked.append((x, y, w, h))
-            cv2.rectangle(orig, (x,y), (x+w, y+h), (0,255,0))
-            #tracker.add(cv2.TrackerKCF_create(), orig, (x,y,w,h))
-            cv2.imshow("df", orig)
+        #if len(cnts) <= 10:#$ and len(approx) < 8:
+        if(w > 100 and w < 185) and (h > 150 and h < 240):
+            cur_roi = (x,y,w,h)
+            cv2.rectangle(orig, (x,y), (x+w, y+h), (255,0,0), 4)
+            tracked.append((x,y,w,h))
+    return tracked
+            
     
 def main():
     tracked = []
-    tracker = cv2.MultiTracker_create()
-    trackCount = 0
+    tracker = cv2.MultiTracker()
+    printscreen = ImageGrab.grab(bbox=(0,50, 1024, 800))
+    roi_board = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
+    roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
+    tracked = findCards(roi_board, roi_board_gray, tracked, tracker)
+    print(tracked)
+    #cv2.SelectROIs("tracker",printscreen,tracked)
+    for item in tracked:
+        tracker.add(cv2.TrackerKCF_create(),roi_board,item)
     while(True):
         printscreen = ImageGrab.grab(bbox=(0,50, 1024, 800))
-        vertices = np.array([[100,600],[100,160],[400,160],[400,10],[580,10],[580,160],[1024,160],[1024,450],[750,450],[750,600]])#,[1100,500],[1100,400]
-        roi_board = region_of_interest(np.array(printscreen),[vertices])
         roi_board = cv2.cvtColor(np.array(printscreen), cv2.COLOR_BGR2RGB)
         roi_board_gray = cv2.cvtColor(np.array(roi_board), cv2.COLOR_BGR2GRAY)
-        #p = process_img(roi_board_gray)
-        #findCards(roi_board, roi_board_gray, game, tracked,tracker, trackCount)
         findCards(roi_board, roi_board_gray, tracked, tracker)
-        ok, boxes = tracker.update(roi_board)
-        for newbox in boxes:
-            p1 = (int(newbox[0]), int(newbox[1]))
-            p2 = (int(newbox[0]) + int(newbox[1]), int(newbox[1] + newbox[3]))
-            cv2.rectangle(roi_board, p1,p2,(200,0,0))
-        cv2.imshow('window', roi_board_gray)
+        #cv2.SelectROIs("tracker",roi_board,tracked)
+        tracker.update(roi_board)
+        for obj in range(len(tracker.getObjects())):
+            cv2.rectangle(roi_board, tracker.getObjects()[obj], (0,255,0), 4)
+        cv2.imshow('window', roi_board)
         if cv2.waitKey(25) & 0xFF == ord('d'):
             game.displayHand()
         if cv2.waitKey(50) & 0xFF == ord('q'):
@@ -131,3 +135,18 @@ if __name__ == "__main__":
     game = gameState.GameState()
     #_thread.start_new_thread(main())
     main()
+
+
+
+### DEPRECATED BUT MIGHT BE USEFUL ###
+#vertices = np.array([[100,600],[100,160],[400,160],[400,10],[580,10],[580,160],[1024,160],[1024,450],[750,450],[750,600]])
+#roi_board = region_of_interest(np.array(printscreen),[vertices])
+#p = process_img(roi_board_gray)
+#findCards(roi_board, roi_board_gray, game, tracked,tracker, trackCount)
+#ok, boxes = tracker.update(roi_board)
+#for newbox in boxes:
+#    p1 = (int(newbox[0]), int(newbox[1]))
+#    p2 = (int(newbox[0]) + int(newbox[1]), int(newbox[1] + newbox[3]))
+#    cv2.rectangle(roi_board, p1,p2,(200,0,0),2)
+
+

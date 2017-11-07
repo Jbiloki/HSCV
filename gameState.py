@@ -12,6 +12,8 @@ class GameState:
         self.playerHand = []
         self.rivalBoard = []
         self.playerBoard = []    
+        self.tracked_cards = []
+    
     #Player Methods
     def displayHand(self):
         print(self.playerHand)
