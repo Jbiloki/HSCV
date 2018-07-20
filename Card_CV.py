@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 19 15:44:01 2017
-
-@author: Nguyen
-"""
 
 #Linear Algebra
 import numpy as np
