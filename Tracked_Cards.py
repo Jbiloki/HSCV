@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Nov  5 18:19:55 2017
-
-@author: Nguyen
-"""
 
 class Card:
     #TODO: Implement type of card (i.e. spell/weapon/minion)
