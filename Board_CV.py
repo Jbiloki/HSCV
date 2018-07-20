@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 20 11:27:37 2017
-
-@author: Nguyen
-"""
 
 #My imports
 import Card_CV
